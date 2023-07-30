@@ -9,6 +9,7 @@ const createError = require('http-errors');
 
 // Router imports
 const indexRouter = require('./routes/index');
+const authRouter = require('./routes/auth');
 
 // Set up mongoose connection
 const mongoDB = process.env.DATABASE_CONNECTION;
@@ -24,11 +25,12 @@ app.use(logger("common"));
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/', indexRouter);
+app.use('/api/auth', authRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
