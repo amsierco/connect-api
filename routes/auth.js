@@ -4,6 +4,7 @@ const { body, validationResult } = require("express-validator");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+// Schema
 const User = require('../models/user');
 
 // POST Login
@@ -29,12 +30,13 @@ router.post('/login',
             }
 
             // Validate password
-            bcrypt.compare(req.body.password, user.password, (err, res) => {
-                if (res) {
+            bcrypt.compare(req.body.password, user.password, (err, resp) => {
+                if (resp) {
                   // Valid password
                   // Save current user in token
-                  jwt.sign({user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
-                    res.status(200).json(token);
+                  jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
+                    res.token = token;
+                    res.status(201).json({token});
                   });
 
                 } else {
@@ -85,10 +87,8 @@ router.post('/signup',
 
                 // Save current user in token
                 jwt.sign({user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
-                    res.status(200).json({
-                        token: token,
-                        user: user
-                    });
+                    res.token = token;
+                    res.status(201).json({token});
                 });
             });
 
@@ -97,5 +97,10 @@ router.post('/signup',
         }
     }
 );
+
+// POST Logout
+router.post('/logout', function(req, res){
+    res.send('LOGOUT FUNCTIONALITY NOT IMPLEMENTED!')
+});
 
 module.exports = router;

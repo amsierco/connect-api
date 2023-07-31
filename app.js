@@ -10,6 +10,7 @@ const createError = require('http-errors');
 // Router imports
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
+const postRouter = require('./routes/post');
 
 // Set up mongoose connection
 const mongoDB = process.env.DATABASE_CONNECTION;
@@ -31,6 +32,33 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Routes
 app.use('/', indexRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/posts', postRouter);
+
+// Verify Token middleware function
+// export default function verifyToken(req, res, next) {
+  // // Get auth header value
+  // const bearerHeader = req.headers['authorization'];
+  // // Check if bearer is undefined
+  // if(typeof bearerHeader !== 'undefined') {
+  //   // Split at the space
+  //   const bearer = bearerHeader.split(' ');
+  //   // Get token from array
+  //   const bearerToken = bearer[1];
+  //   // Set the token
+  //   req.token = bearerToken;
+    
+  //   const decoded_user = jwt.verify(token, process.env.TOKEN_KEY);
+  //   //req.user = decoded_user;
+
+  //   // Next middleware
+  //   next();
+  // } else {
+  //   // Forbidden
+  //   res.sendStatus(403);
+  // }
+  // next();
+// }
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
