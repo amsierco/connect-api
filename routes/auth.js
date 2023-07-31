@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require("express-validator");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const verifyToken = require('../verifyToken');
 
 // Schema
 const User = require('../models/user');
@@ -16,6 +17,7 @@ router.post('/login',
         const errors = validationResult(req);
         // Catch validation errors
         if(!errors.isEmpty()) {
+            console.log('Val Error: ' + errors);
             res.status(500);
         }
 
@@ -26,6 +28,7 @@ router.post('/login',
             const email = await User.findOne({ email: req.body.username_email });
             const user = (username !== null) ? username : email;
             if(!user) {
+                console.log('User not found');
                 res.status(404).json('User not found');
             }
 
@@ -36,16 +39,19 @@ router.post('/login',
                   // Save current user in token
                   jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
                     res.token = token;
+                    console.log('Login Success!');
                     res.status(201).json({token});
                   });
 
                 } else {
                   // Invalid password
+                  console.log('Incorrect password');
                   res.status(403).json('Incorrect password')
                 }
               });
 
         } catch(err) {
+            console.log('Error: '+err);
             return next(err);
         }
     }

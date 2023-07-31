@@ -17,27 +17,8 @@ router.get('/',
     async(req, res, next) => {
         try{
             const posts = await Post.find({}).sort({ date: 1 }).exec();
+            console.log(posts);
             res.status(200).json(posts);
-
-        } catch (err) {
-            return next(err);
-        }
-    }
-);
-
-// GET post by ID
-router.get('/:id',
-    verifyToken,
-    async(req, res, next) => {
-        try{
-            const post_id = req.params.id;
-            const post = await Post.findById(post_id);
-
-            if(null !== post){
-                res.status(200).json(post); 
-            } else {
-                res.status(404).json('Post not found');
-            }
 
         } catch (err) {
             return next(err);
@@ -64,6 +45,53 @@ router.post('/create',
 
             await post.save();
             res.status(200).json(post);
+
+        } catch (err) {
+            return next(err);
+        }
+    }
+);
+
+// POST like a post
+/**
+ * TRY TO ADD UNLIKE FUNCTIONALITY TO SAME HTTP REQUEST
+ */
+router.post('/like',
+    
+);
+
+// GET Post Author
+router.get('/author/:id',
+    verifyToken,
+    async(req, res, next) => {
+        try{
+            const user_id = req.params.id;
+            const user = await User.findById(user_id);
+            if(null !== user){
+                res.status(200).json(user); 
+            } else {
+                res.status(404).json('User not found');
+            }
+
+        } catch (err) {
+            return next(err);
+        }
+    }
+);
+
+// GET post by ID
+router.get('/:id',
+    verifyToken,
+    async(req, res, next) => {
+        try{
+            const post_id = req.params.id;
+            const post = await Post.findById(post_id);
+
+            if(null !== post){
+                res.status(200).json(post); 
+            } else {
+                res.status(404).json('Post not found');
+            }
 
         } catch (err) {
             return next(err);
@@ -144,12 +172,19 @@ router.post('/:id/delete',
 
 );
 
-// POST like a post
-/**
- * TRY TO ADD UNLIKE FUNCTIONALITY TO SAME HTTP REQUEST
- */
-router.post('/like',
+// GET post's comments
+router.post('/:id/comments',
+    verifyToken,
+    async(req, res, next) => {
+        try{
+            const post_id = req.params.id;
+            const comments = await Post.findById(post_id).comments;
+            res.status(200).json(comments);
 
+        } catch (err) {
+            return next(err);
+        }
+    }
 );
 
 // POST add comment to a post
