@@ -8,7 +8,7 @@ const verifyToken = require('../verifyToken');
 const User = require('../models/user');
 const Post = require('../models/post');
 const Comment = require('../models/comment');
-const user = require('../models/user');
+
 
 
 // GET recent and relevant posts
@@ -34,8 +34,8 @@ router.get('/:id',
     async(req, res, next) => {
         try{
             const post_id = req.params.id;
-            const post = await Post.findOne({ _id: post_id });
-            console.log(post);
+            const post = await Post.findById(post_id);
+
             if(null !== post){
                 res.status(200).json(post); 
             } else {
@@ -76,13 +76,74 @@ router.post('/create',
 
 // POST edit post
 router.post('/:id/edit',
-    //verifyToken(),
+    verifyToken,
+    body('message').isLength(1).withMessage('Required field').escape(),
+    async(req, res, next) => {
+        const errors = validationResult(req);
+        // Catch validation errors
+        if(!errors.isEmpty()) {
+            res.status(500);
+        }
 
+        try{
+            const post_id = req.params.id;
+            const old_post = await Post.findById(post_id);
+
+            // Check if post exists
+            if(null === old_post){
+                return res.status(404).json('Post not found');
+            }
+
+            // Check is logged in user created original post
+            if(req.user._id == old_post.user_id){
+                // Find post and update
+                const updated_post = await Post.findOneAndUpdate(
+                    { _id: post_id },
+                    {
+                        message: req.body.message,
+                        edited: true
+                    },
+                    { new: true }
+                );
+                res.status(200).json(updated_post); 
+
+            } else {
+                res.status(403).json('Not the author of the post');
+            }
+
+        } catch (err) {
+            return next(err);
+        }
+    }
 );
 
 // POST delete new post
 router.post('/:id/delete',
-    //verifyToken(),
+    verifyToken,
+    async(req, res, next) => {
+        try{
+            const post_id = req.params.id;
+            const old_post = await Post.findById(post_id);
+
+            // Check if post exists
+            if(null === old_post){
+                return res.status(404).json('Post not found');
+            }
+
+            // Check is logged in user created original post
+            if(req.user._id == old_post.user_id){
+                // Delete post
+                await Post.deleteOne({ _id: post_id });
+                res.status(200).json('Post deleted'); 
+
+            } else {
+                res.status(403).json('Not the author of the post');
+            }
+
+        } catch (err) {
+            return next(err);
+        }
+}
 
 );
 

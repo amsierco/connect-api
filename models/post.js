@@ -6,7 +6,8 @@ const PostSchema = new Schema({
     message: { type: String, max: 500 },
     likes: { type: Number, default: 0 },
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now },
+    edited: { type: Boolean, default: false }
 });
   
 // Export model

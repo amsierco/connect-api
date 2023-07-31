@@ -18,8 +18,8 @@ const verifyToken = (req, res, next) => {
     
     const decoded_user = jwt.verify(bearerToken, process.env.TOKEN_KEY);
 
-    // Format [user, iat, exp]
-    req.user = decoded_user[0];
+    // Format {user, iat, exp}
+    req.user = decoded_user['user'];
 
     // Next middleware
     next();
