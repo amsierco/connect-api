@@ -99,6 +99,9 @@ router.post('/signup',
 );
 
 // POST Logout
+/**
+ * NOT IMPLEMENTED
+ */
 router.post('/logout', function(req, res){
     res.send('LOGOUT FUNCTIONALITY NOT IMPLEMENTED!')
 });

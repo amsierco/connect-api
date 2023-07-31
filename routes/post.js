@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
-const jwt = require('jsonwebtoken');
 const verifyToken = require('../verifyToken');
 
 // Schema
@@ -9,17 +8,15 @@ const User = require('../models/user');
 const Post = require('../models/post');
 const Comment = require('../models/comment');
 
-
-
 // GET recent and relevant posts
 /**
- * IMPLEMENT ORDERING BY DATE AND USERS THAT ARE BEING FOLLOWED
+ * IMPLEMENT ORDERING BY USERS THAT ARE BEING FOLLOWED
  */
 router.get('/', 
     // Get all posts from database
     async(req, res, next) => {
         try{
-            const posts = await Post.find({}).exec();
+            const posts = await Post.find({}).sort({ date: 1 }).exec();
             res.status(200).json(posts);
 
         } catch (err) {
@@ -155,8 +152,41 @@ router.post('/like',
 
 );
 
-/**
- * COMMENTS
- */
+// POST add comment to a post
+router.post('/:id/comments/create',
+    verifyToken,
+    body('message').isLength(1).withMessage('Required field').escape(),
+    async(req, res, next) => {
+        const errors = validationResult(req);
+        // Catch validation errors
+        if(!errors.isEmpty()) {
+            res.status(500);
+        }
+
+        try{
+            const post_id = req.params.id;
+            const post = await Post.findById(post_id);
+
+            // Create new comment
+            const comment = new Comment({
+                post_id: post_id,
+                user_id: req.user,
+                message: req.body.message,
+            });
+
+            // Save comment
+            await comment.save();
+
+            // Add comment to post
+            post.comments.push(comment);
+            await post.save();
+
+            res.status(200).json(comment);
+
+        } catch (err) {
+            return next(err);
+        }
+    }
+);
 
 module.exports = router;
