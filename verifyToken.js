@@ -2,12 +2,9 @@ const jwt = require('jsonwebtoken');
 
 // Verify Token middleware function
 const verifyToken = (req, res, next) => {
-  // console.log(req.headers);
-
-  console.log('verifyToken Called')
 
   // Get auth header value
-  const bearerHeader = req.headers['authorization'];
+  const bearerHeader = req.headers['authorization'].split(',')[0];
 
   // Check if bearer is undefined
   if(typeof bearerHeader !== 'undefined') {
@@ -21,26 +18,25 @@ const verifyToken = (req, res, next) => {
     // Verify token
     jwt.verify(bearerToken, process.env.TOKEN_KEY, (err, decoded) => {
       if(err){
-        /*//Check refresh token
-        Somehow get said refresh token
-        jwt.verify(bearerToken, process.env.REFRESH_TOKEN_KEY, (err, decoded) => {
+        //Check refresh token
+        const refreshHeader = req.headers['authorization'].split(',')[1];
+        // Get token from array
+        const refreshToken = refreshHeader.split(' ')[1];
+
+        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_KEY, (err, decoded) => {
           if(err){
+            res.sendStatus(403);
+          } else {
+
+            // Refresh new token
+            const new_token = jwt.sign({user: decoded['user']}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE});
+          
+            req.user = decoded['user'];
+            req.token = new_token;
+            next();
           }
+        });
 
-          // Stores user in req
-          req.user = decoded['user'];
-
-          // Refresh new token
-          const new_token = jwt.sign({user: decoded['user']}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE});
-        
-          // Stores new token in req
-          req.token = new_token;
-
-          next();
-        });*/
-
-        return res.sendStatus(403);
-        
       } else {
         req.user = decoded['user'];
         req.token = bearerToken;
@@ -49,7 +45,7 @@ const verifyToken = (req, res, next) => {
     });
     
   } else {
-    return res.sendStatus(403);
+    res.sendStatus(403);
   }
 }
 

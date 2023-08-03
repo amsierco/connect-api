@@ -14,7 +14,6 @@ const Comment = require('../models/comment');
  */
 router.get('/', 
     // Get all posts from database
-    // verifyToken,
     async(req, res, next) => {
         console.log('posts collected');
         try{
@@ -30,7 +29,6 @@ router.get('/',
 
 // POST create new post
 router.post('/create', 
-    verifyToken,
     body('message').isLength(1).withMessage('Required field').escape(),
     async(req, res, next) => {
         const errors = validationResult(req);
@@ -64,14 +62,13 @@ router.post('/like',
 
 // GET Post Author
 router.get('/author/:id',
-    // verifyToken,
     async(req, res, next) => {
         try{
             const user_id = req.params.id;
-            console.log('Incomming ID: ' + user_id);
+            // console.log('Incomming ID: ' + user_id);
             const user = await User.findById(user_id);
             if(null !== user){
-                console.log('Response sent!')
+                // console.log('Response sent!')
                 res.status(200).json(user); 
             } else {
                 res.status(404).json('User not found');
@@ -85,7 +82,6 @@ router.get('/author/:id',
 
 // GET post by ID
 router.get('/:id',
-    verifyToken,
     async(req, res, next) => {
         try{
             const post_id = req.params.id;
@@ -105,7 +101,6 @@ router.get('/:id',
 
 // POST edit post
 router.post('/:id/edit',
-    verifyToken,
     body('message').isLength(1).withMessage('Required field').escape(),
     async(req, res, next) => {
         const errors = validationResult(req);
@@ -148,7 +143,6 @@ router.post('/:id/edit',
 
 // POST delete new post
 router.post('/:id/delete',
-    verifyToken,
     async(req, res, next) => {
         try{
             const post_id = req.params.id;
@@ -178,7 +172,6 @@ router.post('/:id/delete',
 
 // GET post's comments
 router.post('/:id/comments',
-    verifyToken,
     async(req, res, next) => {
         try{
             const post_id = req.params.id;
@@ -193,7 +186,6 @@ router.post('/:id/comments',
 
 // POST add comment to a post
 router.post('/:id/comments/create',
-    verifyToken,
     body('message').isLength(1).withMessage('Required field').escape(),
     async(req, res, next) => {
         const errors = validationResult(req);

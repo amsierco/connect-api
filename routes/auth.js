@@ -35,13 +35,14 @@ async function findOrCreateAccount(user){
 
 // GET Validate jwt token
 router.get('/validate', verifyToken, (req, res) => {
-    res.status(200).json(true);
+    console.log('/validate called')
+    res.status(200).json({ access_token: req.token });
 });
 
 // GET Refresh jwt token
-router.get('/refresh',
-    verifyToken,
-);
+// router.get('/refresh',
+//     verifyToken,
+// );
 
 // POST Login
 router.post('/login', 
@@ -69,19 +70,16 @@ router.post('/login',
 
             // Validate password
             bcrypt.compare(req.body.password, user.password, (err, resp) => {
+                // Valid password
                 if (resp) {
-                    // Valid password
-                    // Save auth token
-                    // process.env.TOKEN_KEY_EXPIRE
-                    // console.log(typeof(process.env.TOKEN_KEY_EXPIRE) +' '+ process.env.TOKEN_KEY_EXPIRE)
+                    // Access token
                     const access_token = jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
-                    // Save refresh token
-                    // const refresh_token = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+                    // Refresh token
+                    const refresh_token = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
 
-                    // console.log(access_token);
                     res.status(201).json({
                         access_token: access_token,
-                        // refresh_token: refresh_token
+                        refresh_token: refresh_token
                     });
 
                 } else {
