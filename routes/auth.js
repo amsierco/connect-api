@@ -6,6 +6,16 @@ const bcrypt = require('bcryptjs');
 const verifyToken = require('../verifyToken');
 const passport = require('passport');
 
+// Google auth
+const { OAuth2Client } = require('google-auth-library')
+// const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+
+const oAuth2Client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    'postmessage',
+  );
+
 // Schema
 const User = require('../models/user');
 
@@ -24,11 +34,12 @@ async function findOrCreateAccount(user){
         const new_account = new User({
             username: user.username,
             email: user.email,
+            picture: user.picture
         });
 
         // Save to databse
         await new_account.save();
-        console.log('New account');
+        console.log('New account Created - Google');
         return new_account;
     }
 }
@@ -38,11 +49,6 @@ router.get('/validate', verifyToken, (req, res) => {
     console.log('/validate called')
     res.status(200).json({ access_token: req.token });
 });
-
-// GET Refresh jwt token
-// router.get('/refresh',
-//     verifyToken,
-// );
 
 // POST Login
 router.post('/login', 
@@ -143,11 +149,47 @@ router.post('/signup',
     }
 );
 
-// GET Google OAuth screen
-router.get('/google',
-    passport.authenticate("google", {
-        scope: ["profile", "email"],
-    })
+// POST Google Login
+router.post('/google',
+
+    async(req, res) => {
+        // exchange code for tokens
+        const { tokens } = await oAuth2Client.getToken(req.body.code); 
+        console.log(tokens);
+
+        const ticket = await oAuth2Client.verifyIdToken({
+            idToken: tokens.id_token,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const { name, email, picture } = ticket.getPayload(); 
+        const user = {
+            username: name,
+            email: email,
+            picture: picture,
+        }   
+        console.log(user);
+        const new_account = await findOrCreateAccount(user);
+
+        // Access token
+        const access_token = jwt.sign({user: new_account}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+        // Refresh token
+        const refresh_token = jwt.sign({user: new_account}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+
+        console.log('Google Auth Process Completed!');
+
+        res.status(201).json({
+            access_token: access_token,
+            refresh_token: refresh_token
+        });
+
+        // res.status(201).json(user);
+    }
+
+
+    // passport.authenticate("google", {
+    //     scope: ["profile", "email"],
+    // })
 );
 
 // GET Google login callback
