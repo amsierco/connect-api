@@ -14,7 +14,7 @@ const Comment = require('../models/comment');
  */
 router.get('/', 
     // Get all posts from database
-    verifyToken,
+    // verifyToken,
     async(req, res, next) => {
         console.log('posts collected');
         try{

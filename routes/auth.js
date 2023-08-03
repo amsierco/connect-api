@@ -35,8 +35,7 @@ async function findOrCreateAccount(user){
 
 // GET Validate jwt token
 router.get('/validate', verifyToken, (req, res) => {
-    console.log('/validate ->')
-    res.status(200).json('Valid Token')
+    res.status(200).json(true);
 });
 
 // GET Refresh jwt token
@@ -53,7 +52,7 @@ router.post('/login',
         const errors = validationResult(req);
         // Catch validation errors
         if(!errors.isEmpty()) {
-            console.log('Val Error: ' + errors);
+            console.log('Validation Error: ' + errors);
             res.status(500);
         }
 
@@ -73,16 +72,16 @@ router.post('/login',
                 if (resp) {
                     // Valid password
                     // Save auth token
-                    const access_token = jwt.sign({user: user}, 'secretkey', { expiresIn: 60*60 });
+                    // process.env.TOKEN_KEY_EXPIRE
+                    // console.log(typeof(process.env.TOKEN_KEY_EXPIRE) +' '+ process.env.TOKEN_KEY_EXPIRE)
+                    const access_token = jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
                     // Save refresh token
-                    const refresh_token = jwt.sign({user: user}, 'eeeeee', { expiresIn: 60*60*60 });
+                    // const refresh_token = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
 
-                    // res.json({access_token});
-                    console.log(access_token);
-                    console.log('LOGIN COMPLETE');
+                    // console.log(access_token);
                     res.status(201).json({
                         access_token: access_token,
-                        refresh_token: refresh_token
+                        // refresh_token: refresh_token
                     });
 
                 } else {
