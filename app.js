@@ -7,6 +7,8 @@ const logger = require('morgan');
 const path = require('path');
 const createError = require('http-errors');
 const cors = require('cors');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 // Router imports
 const authRouter = require('./routes/auth');
@@ -22,6 +24,29 @@ db.on("error", console.error.bind(console, "MongoDB connection error"));
 // https://expressjs.com/en/resources/middleware/cors.html#enabling-cors-pre-flight
 app.use(cors());
 
+/**
+ * COOKIE PARSER
+ */
+
+// Passport strategies
+passport.use(
+  new GoogleStrategy(
+    {
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      console.log('Google auth validation called');
+      return done(null, profile);
+    }
+  )
+);
+
+app.use(passport.initialize());
+// Session temp
+// app.use(passport.session());
+
 // Middleware
 app.use(express.json());
 app.use(helmet());
@@ -34,6 +59,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
+app.get('/', (req,res,next) => {res.render('layout', {message: 'test'})});
+app.get('/home', (req,res,next) => {res.render('layout', {message: 'WORKING'})});
 app.use('/api/auth', authRouter);
 app.use('/api/posts', postRouter);
 

@@ -4,9 +4,45 @@ const { body, validationResult } = require("express-validator");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const verifyToken = require('../verifyToken');
+const passport = require('passport');
 
 // Schema
 const User = require('../models/user');
+
+// External login/signup check
+async function findOrCreateAccount(user){
+    const existing_account = await User.findOne({ email: user.email });
+    console.log('existing? '+existing_account);
+    // Account exists
+    if(existing_account){
+        console.log('Existing account');
+        return existing_account;
+    
+    // Create new account
+    } else {
+        // Create a new database entry
+        const new_account = new User({
+            username: user.username,
+            email: user.email,
+        });
+
+        // Save to databse
+        await new_account.save();
+        console.log('New account');
+        return new_account;
+    }
+}
+
+// GET Validate jwt token
+router.get('/validate', verifyToken, (req, res) => {
+    console.log('/validate ->')
+    res.status(200).json('Valid Token')
+});
+
+// GET Refresh jwt token
+router.get('/refresh',
+    verifyToken,
+);
 
 // POST Login
 router.post('/login', 
@@ -35,18 +71,24 @@ router.post('/login',
             // Validate password
             bcrypt.compare(req.body.password, user.password, (err, resp) => {
                 if (resp) {
-                  // Valid password
-                  // Save current user in token
-                  jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
-                    res.token = token;
-                    console.log('Login Success!');
-                    res.status(201).json({token});
-                  });
+                    // Valid password
+                    // Save auth token
+                    const access_token = jwt.sign({user: user}, 'secretkey', { expiresIn: 60*60 });
+                    // Save refresh token
+                    const refresh_token = jwt.sign({user: user}, 'eeeeee', { expiresIn: 60*60*60 });
+
+                    // res.json({access_token});
+                    console.log(access_token);
+                    console.log('LOGIN COMPLETE');
+                    res.status(201).json({
+                        access_token: access_token,
+                        refresh_token: refresh_token
+                    });
 
                 } else {
-                  // Invalid password
-                  console.log('Incorrect password');
-                  res.status(403).json('Incorrect password')
+                    // Invalid password
+                    console.log('Incorrect password');
+                    res.status(403).json('Incorrect password')
                 }
               });
 
@@ -91,17 +133,51 @@ router.post('/signup',
                 // Save to databse
                 await user.save();
 
-                // Save current user in token
-                jwt.sign({user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
-                    res.token = token;
-                    res.status(201).json({token});
-                });
+                // Save auth token
+                const access_token = jwt.sign({user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+                // Save refresh token
+                const refresh_token = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+                res.status(201).json({access_token, refresh_token});
             });
 
         } catch(err) {
             return next(err);
         }
     }
+);
+
+// GET Google OAuth screen
+router.get('/google',
+    passport.authenticate("google", {
+        scope: ["profile", "email"],
+    })
+);
+
+// GET Google login callback
+router.get("/google/callback",
+    passport.authenticate("google", { session: false }),
+    async function(req, res){
+        const google_user = {
+            username: req.user.displayName,
+            email: req.user._json.email,
+            picture: req.user._json.picture,
+            provider: req.user.provider
+        };
+
+        try {
+            const user = await findOrCreateAccount(google_user);
+            // Save current user in token
+            jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
+                res.token = token;
+                res.status(201).json({token});
+            });
+
+        } catch (err) {
+            res.status(500).json(err);
+        }
+
+    }
+
 );
 
 // POST Logout

@@ -14,13 +14,15 @@ const Comment = require('../models/comment');
  */
 router.get('/', 
     // Get all posts from database
+    verifyToken,
     async(req, res, next) => {
+        console.log('posts collected');
         try{
             const posts = await Post.find({}).sort({ date: 1 }).exec();
-            console.log(posts);
             res.status(200).json(posts);
 
         } catch (err) {
+            console.log('err'+err)
             return next(err);
         }
     }
@@ -62,12 +64,14 @@ router.post('/like',
 
 // GET Post Author
 router.get('/author/:id',
-    verifyToken,
+    // verifyToken,
     async(req, res, next) => {
         try{
             const user_id = req.params.id;
+            console.log('Incomming ID: ' + user_id);
             const user = await User.findById(user_id);
             if(null !== user){
+                console.log('Response sent!')
                 res.status(200).json(user); 
             } else {
                 res.status(404).json('User not found');
