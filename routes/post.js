@@ -61,30 +61,52 @@ router.post('/create',
 router.post('/like/:id',
     verifyToken,
     async(req, res) => {
+        console.log('passed verification')
         try {
             const post_id = req.params.id;
             const user = req.user;
 
             // Search DB
-            const post = await Post.findById(post_id).exec();
-            const is_like = await post.find({
-                likes: {
-                    users: user
-                }
-            }).exec();
+            const post = await Post.findOne({
+                _id: post_id,
+                'likes.users': user
+            });
 
             // Unlike post
-            if(null !== is_like){
+            if(null !== post){
 
-                //advanced db query
+                // Decrease likes and pull user from like array
+                console.log('Try to remove like')
+                const updated_post = await Post.findOneAndUpdate(
+                    { _id: post_id},
+                    {
+                        $inc: { 'likes.count': -1 },
+                        $pull: {'likes.users': user._id }
+                    },
+                    { new: true }
+                );
+                res.status(200).json(updated_post.likes.count);
 
             // Like post
             } else {
 
+                // Increase likes and push user to like array
+                console.log('Try to add like')
+
+                const updated_post = await Post.findOneAndUpdate(
+                    { _id: post_id },
+                    {
+                        $inc: { 'likes.count': 1 },
+                        $push: { 'likes.users': user }
+                    },
+                    { new: true }
+                );
+                res.status(200).json(updated_post.likes.count);
             }
 
         } catch (err) {
-            return next(err);
+            console.log(err);
+            res.status(500).json(err);
         }
     }
 );
