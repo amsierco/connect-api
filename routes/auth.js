@@ -46,7 +46,6 @@ async function findOrCreateAccount(user){
 
 // GET Validate jwt token
 router.get('/validate', verifyToken, (req, res) => {
-    console.log('/validate called')
     res.status(200).json({ access_token: req.token });
 });
 

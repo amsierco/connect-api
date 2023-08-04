@@ -22,7 +22,6 @@ const verifyToken = (req, res, next) => {
         const refreshHeader = req.headers['authorization'].split(',')[1];
         // Get token from array
         const refreshToken = refreshHeader.split(' ')[1];
-
         jwt.verify(refreshToken, process.env.REFRESH_TOKEN_KEY, (err, decoded) => {
           if(err){
             res.sendStatus(403);

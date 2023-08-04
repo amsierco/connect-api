@@ -24,10 +24,6 @@ db.on("error", console.error.bind(console, "MongoDB connection error"));
 // https://expressjs.com/en/resources/middleware/cors.html#enabling-cors-pre-flight
 app.use(cors());
 
-/**
- * COOKIE PARSER
- */
-
 // Passport strategies
 passport.use(
   new GoogleStrategy(
@@ -42,10 +38,7 @@ passport.use(
     }
   )
 );
-
 app.use(passport.initialize());
-// Session temp
-// app.use(passport.session());
 
 // Middleware
 app.use(express.json());

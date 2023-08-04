@@ -29,7 +29,8 @@ router.get('/',
 
 // POST create new post
 router.post('/create', 
-    body('message').isLength(1).withMessage('Required field').escape(),
+    verifyToken,
+    body('message').isLength(1).withMessage('Required field'),
     async(req, res, next) => {
         const errors = validationResult(req);
         // Catch validation errors
@@ -45,9 +46,10 @@ router.post('/create',
 
             await post.save();
             res.status(200).json(post);
+            res.status(200);
 
         } catch (err) {
-            return next(err);
+            res.status(500);
         }
     }
 );
@@ -56,8 +58,35 @@ router.post('/create',
 /**
  * TRY TO ADD UNLIKE FUNCTIONALITY TO SAME HTTP REQUEST
  */
-router.post('/like',
-    
+router.post('/like/:id',
+    verifyToken,
+    async(req, res) => {
+        try {
+            const post_id = req.params.id;
+            const user = req.user;
+
+            // Search DB
+            const post = await Post.findById(post_id).exec();
+            const is_like = await post.find({
+                likes: {
+                    users: user
+                }
+            }).exec();
+
+            // Unlike post
+            if(null !== is_like){
+
+                //advanced db query
+
+            // Like post
+            } else {
+
+            }
+
+        } catch (err) {
+            return next(err);
+        }
+    }
 );
 
 // GET Post Author
