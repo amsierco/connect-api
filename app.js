@@ -14,6 +14,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const authRouter = require('./routes/auth');
 const postRouter = require('./routes/post');
 const profileRouter = require('./routes/profile');
+const friendRouter = require('./routes/friend');
 
 // Set up mongoose connection
 const mongoDB = process.env.DATABASE_CONNECTION;
@@ -58,6 +59,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRouter);
 app.use('/api/posts', postRouter);
 app.use('/api/profile', profileRouter);
+app.use('/api/friend', friendRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

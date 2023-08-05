@@ -18,20 +18,43 @@ router.get('/',
 
 // GET profile from ID
 router.get('/:id', 
-async(req, res, next) => {
-    try{
-        const user_id = req.params.id;
-        const user = await User.findById(user_id).projection({ password: 0 });
-        if(null !== user){
-            res.status(200).json(user); 
-        } else {
-            res.status(404).json('User not found');
-        }
+    async(req, res, next) => {
+        try{
+            const user_id = req.params.id;
+            const user = await User.findById(user_id);
+            delete user.password;
+            // console.log(user);
+            if(null !== user){
+                res.status(200).json(user); 
+            } else {
+                res.status(404).json('User not found');
+            }
 
-    } catch (err) {
-        return next(err);
+        } catch (err) {
+            return next(err);
+        }
     }
-}
 );
+
+// GET friends
+router.get('/:id/friends',
+    async(req, res, next) => {
+        try{
+            const user_id = req.params.id;
+            const user = await User.findById(user_id);
+            const friends = user.friends;
+
+            if(null !== user){
+                res.status(200).json(friends); 
+            } else {
+                res.status(404).json('User not found');
+            }
+
+        } catch (err) {
+            return next(err);
+        }
+    }
+);
+
 
 module.exports = router;

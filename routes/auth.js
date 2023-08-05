@@ -48,7 +48,12 @@ async function findOrCreateAccount(user){
 router.get('/validate', 
     verifyToken,
     (req, res) => {
-        res.status(200).json({ access_token: req.token, user: req.user });
+        const user = {
+            _id: req.user._id,
+            username: req.user.username,
+            picture: req.user.picture
+        };
+        res.status(200).json({ access_token: req.token, user: user });
     }
 );
 
