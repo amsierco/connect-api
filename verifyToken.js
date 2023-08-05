@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const verifyToken = (req, res, next) => {
 
   // Get auth header value
-  const bearerHeader = req.headers['authorization'].split(',')[0];
+  const bearerHeader = req.headers['authorization'];
 
   // Check if bearer is undefined
   if(typeof bearerHeader !== 'undefined') {
@@ -15,13 +15,12 @@ const verifyToken = (req, res, next) => {
     // Get token from array
     const bearerToken = bearer[1];
 
-    // Verify token
+    // Verify access token
     jwt.verify(bearerToken, process.env.TOKEN_KEY, (err, decoded) => {
       if(err){
         //Check refresh token
-        const refreshHeader = req.headers['authorization'].split(',')[1];
-        // Get token from array
-        const refreshToken = refreshHeader.split(' ')[1];
+        const refreshToken = req.headers['refresh_token'];
+
         jwt.verify(refreshToken, process.env.REFRESH_TOKEN_KEY, (err, decoded) => {
           if(err){
             res.sendStatus(403);
@@ -30,14 +29,20 @@ const verifyToken = (req, res, next) => {
             // Refresh new token
             const new_token = jwt.sign({user: decoded['user']}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE});
           
-            req.user = decoded['user'];
+            const user = decoded['user'];
+            // Removes password field
+            delete user.password;
+            req.user = user;
             req.token = new_token;
             next();
           }
         });
 
       } else {
-        req.user = decoded['user'];
+        const user = decoded['user'];
+        // Removes password field
+        delete user.password;
+        req.user = user;
         req.token = bearerToken;
         next();
       }

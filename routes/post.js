@@ -55,9 +55,6 @@ router.post('/create',
 );
 
 // POST like a post
-/**
- * TRY TO ADD UNLIKE FUNCTIONALITY TO SAME HTTP REQUEST
- */
 router.post('/like/:id',
     verifyToken,
     async(req, res) => {
@@ -102,6 +99,33 @@ router.post('/like/:id',
                     { new: true }
                 );
                 res.status(200).json(updated_post.likes.count);
+            }
+
+        } catch (err) {
+            console.log(err);
+            res.status(500).json(err);
+        }
+    }
+);
+
+// GET to see if user liked a post
+router.get('/like/:id',
+    verifyToken,
+    async(req, res) => {
+        try {
+            const post_id = req.params.id;
+            const user = req.user;
+
+            // Search DB
+            const post = await Post.findOne({
+                _id: post_id,
+                'likes.users': user
+            });
+
+            if(null !== post){
+                res.status(200).json(true);
+            } else {
+                res.status(200).json(false);
             }
 
         } catch (err) {

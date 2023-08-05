@@ -45,9 +45,12 @@ async function findOrCreateAccount(user){
 }
 
 // GET Validate jwt token
-router.get('/validate', verifyToken, (req, res) => {
-    res.status(200).json({ access_token: req.token });
-});
+router.get('/validate', 
+    verifyToken,
+    (req, res) => {
+        res.status(200).json({ access_token: req.token, user: req.user });
+    }
+);
 
 // POST Login
 router.post('/login', 
