@@ -17,7 +17,7 @@ router.get('/',
     async(req, res, next) => {
         console.log('posts collected');
         try{
-            const posts = await Post.find({}).sort({ date: 1 }).exec();
+            const posts = await Post.find({}).sort({ date: 1 }).populate('comments').exec();
             res.status(200).json(posts);
 
         } catch (err) {
@@ -258,7 +258,10 @@ router.post('/:id/comments',
     async(req, res, next) => {
         try{
             const post_id = req.params.id;
-            const comments = await Post.findById(post_id).comments;
+            const post = await Post.findById(post_id).populate('comments.user_id');
+            console.log(post);
+            const comments = post.comments;
+            console.log(comments);
             res.status(200).json(comments);
 
         } catch (err) {
@@ -269,8 +272,10 @@ router.post('/:id/comments',
 
 // POST add comment to a post
 router.post('/:id/comments/create',
+    verifyToken,
     body('message').isLength(1).withMessage('Required field').escape(),
     async(req, res, next) => {
+        console.log('TRY TO MAKE COMMENT')
         const errors = validationResult(req);
         // Catch validation errors
         if(!errors.isEmpty()) {
@@ -295,6 +300,7 @@ router.post('/:id/comments/create',
             post.comments.push(comment);
             await post.save();
 
+            console.log('COMMENT CREATED!')
             res.status(200).json(comment);
 
         } catch (err) {
