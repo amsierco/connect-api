@@ -5,6 +5,27 @@ const verifyToken = require('../verifyToken');
 // Schema
 const User = require('../models/user');
 
+// GET friend
+router.get('/:id',
+    async(req, res, next) => {
+        try{
+            const user_id = req.params.id;
+            const user = await User.findById(user_id);
+            if(null !== user){
+                res.status(200).json({
+                    username: user.username,
+                    picture: user.picture
+                }); 
+            } else {
+                res.status(404).json('User not found');
+            }
+
+        } catch (err) {
+            return next(err);
+        }
+    }
+);
+
 // POST send friend request
 router.post('/:id/request',
     (req,res,next)=>{console.log('req recieved');next();},

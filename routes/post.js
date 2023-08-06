@@ -45,8 +45,16 @@ router.post('/create',
             });
 
             await post.save();
+
+            // Updated user doc
+            await User.findOneAndUpdate(
+                { _id: req.user._id },
+                {
+                    $push: { posts: post }
+                }
+            )
+
             res.status(200).json(post);
-            res.status(200);
 
         } catch (err) {
             res.status(500);
@@ -117,12 +125,12 @@ router.get('/like/:id',
             const user = req.user;
 
             // Search DB
-            const post = await Post.findOne({
+            const already_liked = await Post.findOne({
                 _id: post_id,
                 'likes.users': user
             });
 
-            if(null !== post){
+            if(null !== already_liked){
                 res.status(200).json(true);
             } else {
                 res.status(200).json(false);
