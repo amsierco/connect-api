@@ -7,16 +7,53 @@ const User = require('../models/user');
 
 // GET friend
 router.get('/:id',
+    verifyToken,
     async(req, res, next) => {
         try{
             const user_id = req.params.id;
+            // Gets friends by their id
             const user = await User.findById(user_id);
+
             if(null !== user){
-                res.status(200).json({
-                    username: user.username,
-                    picture: user.picture,
-                    _id: user._id
-                }); 
+
+                // Check if friend is current user
+                if(user_id === req.user._id){
+                    console.log('SAME USER')
+                    return res.status(200).json({
+                        username: user.username,
+                        picture: user.picture,
+                        _id: user._id,
+                        isFriend: true,
+                        isUser: true
+                    }); 
+                }
+
+                // Check if logged in user is also a friend
+                const friend_status = await User.findOne({
+                    _id: user_id,
+                    'friends': req.user
+                });
+
+                if(null !== friend_status){
+                    console.log('ACTIVE USER IS FRIEND')
+                    res.status(200).json({
+                        username: user.username,
+                        picture: user.picture,
+                        _id: user._id,
+                        isFriend: true,
+                        isUser: false
+                    }); 
+                } else {
+                    console.log('ACTIVE USER IS NOT FRIEND')
+                    res.status(200).json({
+                        username: user.username,
+                        picture: user.picture,
+                        _id: user._id,
+                        isFriend: false,
+                        isUser: false
+                    }); 
+                }
+
             } else {
                 res.status(404).json('User not found');
             }
@@ -29,7 +66,6 @@ router.get('/:id',
 
 // POST send friend request
 router.post('/:id/request',
-    (req,res,next)=>{console.log('req recieved');next();},
     verifyToken,
     async(req, res, next) => {
         try {
@@ -55,6 +91,7 @@ router.post('/:id/request',
 
             if(response) {
                 // Remove friend
+                console.log('remove friend')
                 await User.findOneAndUpdate(
                     { _id: sender_id },
                     {
