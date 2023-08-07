@@ -14,7 +14,8 @@ router.get('/:id',
             if(null !== user){
                 res.status(200).json({
                     username: user.username,
-                    picture: user.picture
+                    picture: user.picture,
+                    _id: user._id
                 }); 
             } else {
                 res.status(404).json('User not found');
@@ -35,29 +36,58 @@ router.post('/:id/request',
             const reciever_id = req.params.id;
             const sender_id = req.user._id;
 
+            console.log('Reciev ' + reciever_id);
+            console.log('Sender ' + sender_id);
+
             /**
              * Add validation/checks
              * Force accepting now for testing
              */
 
-            await User.findOneAndUpdate(
-                {_id: reciever_id},
+            // Check if already friends
+            const response =  await User.findOneAndUpdate(
                 {
-                    $push: { friends: sender_id }
+                    _id: reciever_id,
+                    'friends': req.user
+                },
+                {
+                    $pull: { friends: sender_id }
                 },
                 {new: true}
             );
 
-            await User.findOneAndUpdate(
-                {_id: sender_id},
-                {
-                    $push: { friends: reciever_id }
-                },
-                {new: true}
-            );
+            console.log(response);
+            if(response) {
+                console.log('friend removed')
+                await User.findOneAndUpdate(
+                    { _id: sender_id },
+                    {
+                        $pull: { friends: reciever_id }
+                    }
+                );
+                return res.status(200);
 
-            console.log('friends added')
-            res.status(200);
+            } else {
+
+                await User.findOneAndUpdate(
+                    {_id: reciever_id},
+                    {
+                        $push: { friends: sender_id }
+                    },
+                    {new: true}
+                );
+
+                await User.findOneAndUpdate(
+                    {_id: sender_id},
+                    {
+                        $push: { friends: reciever_id }
+                    },
+                    {new: true}
+                );
+
+                console.log('friends added')
+                res.status(200);
+            }
 
         } catch (err) {
             next(err);
