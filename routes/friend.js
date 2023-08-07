@@ -36,9 +36,6 @@ router.post('/:id/request',
             const reciever_id = req.params.id;
             const sender_id = req.user._id;
 
-            console.log('Reciev ' + reciever_id);
-            console.log('Sender ' + sender_id);
-
             /**
              * Add validation/checks
              * Force accepting now for testing
@@ -56,9 +53,8 @@ router.post('/:id/request',
                 {new: true}
             );
 
-            console.log(response);
             if(response) {
-                console.log('friend removed')
+                // Remove friend
                 await User.findOneAndUpdate(
                     { _id: sender_id },
                     {
@@ -68,24 +64,31 @@ router.post('/:id/request',
                 return res.status(200);
 
             } else {
+                // Add friend
 
                 await User.findOneAndUpdate(
                     {_id: reciever_id},
                     {
-                        $push: { friends: sender_id }
+                        $push: { notifications: {notification_type: 'friend_request', sender: sender_id} }
                     },
                     {new: true}
                 );
 
-                await User.findOneAndUpdate(
-                    {_id: sender_id},
-                    {
-                        $push: { friends: reciever_id }
-                    },
-                    {new: true}
-                );
+                // await User.findOneAndUpdate(
+                //     {_id: reciever_id},
+                //     {
+                //         $push: { friends: sender_id }
+                //     },
+                //     {new: true}
+                // );
 
-                console.log('friends added')
+                // await User.findOneAndUpdate(
+                //     {_id: sender_id},
+                //     {
+                //         $push: { friends: reciever_id }
+                //     },
+                //     {new: true}
+                // );
                 res.status(200);
             }
 

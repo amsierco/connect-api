@@ -71,7 +71,6 @@ router.post('/create',
 router.post('/like/:id',
     verifyToken,
     async(req, res) => {
-        console.log('passed verification')
         try {
             const post_id = req.params.id;
             const user = req.user;
@@ -149,24 +148,24 @@ router.get('/like/:id',
 );
 
 // GET Post Author
-router.get('/author/:id',
-    async(req, res, next) => {
-        try{
-            const user_id = req.params.id;
-            // console.log('Incomming ID: ' + user_id);
-            const user = await User.findById(user_id);
-            if(null !== user){
-                // console.log('Response sent!')
-                res.status(200).json(user); 
-            } else {
-                res.status(404).json('User not found');
-            }
+// router.get('/author/:id',
+//     async(req, res, next) => {
+//         try{
+//             const user_id = req.params.id;
+//             // console.log('Incomming ID: ' + user_id);
+//             const user = await User.findById(user_id);
+//             if(null !== user){
+//                 // console.log('Response sent!')
+//                 res.status(200).json(user); 
+//             } else {
+//                 res.status(404).json('User not found');
+//             }
 
-        } catch (err) {
-            return next(err);
-        }
-    }
-);
+//         } catch (err) {
+//             return next(err);
+//         }
+//     }
+// );
 
 // GET post by ID
 router.get('/:id',
@@ -277,7 +276,6 @@ router.post('/:id/comments/create',
     verifyToken,
     body('message').isLength(1).withMessage('Required field').escape(),
     async(req, res, next) => {
-        console.log('TRY TO MAKE COMMENT')
         const errors = validationResult(req);
         // Catch validation errors
         if(!errors.isEmpty()) {
@@ -302,7 +300,6 @@ router.post('/:id/comments/create',
             post.comments.push(comment);
             await post.save();
 
-            console.log('COMMENT CREATED!')
             res.status(200).json(comment);
 
         } catch (err) {

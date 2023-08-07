@@ -221,17 +221,7 @@ router.get("/google/callback",
         } catch (err) {
             res.status(500).json(err);
         }
-
     }
-
 );
-
-// POST Logout
-/**
- * NOT IMPLEMENTED
- */
-router.post('/logout', function(req, res){
-    res.send('LOGOUT FUNCTIONALITY NOT IMPLEMENTED!')
-});
 
 module.exports = router;
