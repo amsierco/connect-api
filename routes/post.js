@@ -15,10 +15,15 @@ const Comment = require('../models/comment');
 router.get('/', 
     // Get all posts from database
     async(req, res, next) => {
-        console.log('posts collected');
+
         try{
-            const posts = await Post.find({}).sort({ date: 1 }).populate('comments').exec();
+            const posts = await Post.find({}).sort({ date: 1 }).populate([
+                { path: 'comments' },
+                { path: 'user_id', select: 'username picture _id', strictPopulate: false } 
+            ]).exec();
+            console.log(posts);
             res.status(200).json(posts);
+            console.log('posts collected');
 
         } catch (err) {
             console.log('err'+err)
@@ -254,14 +259,11 @@ router.post('/:id/delete',
 );
 
 // GET post's comments
-router.post('/:id/comments',
+router.get('/:id/comments',
     async(req, res, next) => {
         try{
             const post_id = req.params.id;
-            const post = await Post.findById(post_id).populate('comments.user_id');
-            console.log(post);
-            const comments = post.comments;
-            console.log(comments);
+            const comments = await Comment.findById(post_id).populate('user_id');
             res.status(200).json(comments);
 
         } catch (err) {
