@@ -39,7 +39,8 @@ router.post('/friend-request/:id/:status',
                         },
                     },
                 },
-            ).select('notifications');
+            )
+            .select('notifications');
 
             // console.log(notification);
 
@@ -51,7 +52,7 @@ router.post('/friend-request/:id/:status',
                 if(req.params.status === 'accept'){
 
                     // Update active user
-                    await User.findOneAndUpdate(
+                    const updatedResponse = await User.findOneAndUpdate(
                         {_id: current_user},
                         {
                             $push: { friends: notif_user },
@@ -63,6 +64,14 @@ router.post('/friend-request/:id/:status',
                             }
                         },
                         {new: true}
+                    )
+                    .populate(
+                        {
+                            path: 'notifications',
+                            populate: {
+                                path: 'sender'
+                            }
+                        }
                     );
 
                     // Update user who initiated notification request
@@ -73,8 +82,11 @@ router.post('/friend-request/:id/:status',
                         }
                     );
 
+                    console.log(updatedResponse);
+                    const updatedNotifications = updatedResponse.notifications
+
                     console.log('FRIEND ADDED')
-                    res.status(200);
+                    res.status(200).json({notifications: updatedNotifications});
 
                 } else if (req.params.status === 'reject') {
                     // Update active user

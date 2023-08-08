@@ -21,11 +21,22 @@ const User = require('../models/user');
 
 // External login/signup check
 async function findOrCreateAccount(user){
-    const existing_account = await User.findOne({ email: user.email });
-    console.log('existing? '+existing_account);
+    // const existing_account = await User.findOne({ email: user.email });
+    const existing_account = await User
+        .findOne({ email: user.email })
+        .populate(
+            {
+                path: 'notifications',
+                populate: {
+                    path: 'sender'
+                }
+            }
+        )
+        .exec();
+    // console.log('existing? '+existing_account);
     // Account exists
     if(existing_account){
-        console.log('Existing account');
+        // console.log('Existing account');
         return existing_account;
     
     // Create new account
@@ -39,7 +50,7 @@ async function findOrCreateAccount(user){
 
         // Save to databse
         await new_account.save();
-        console.log('New account Created - Google');
+        // console.log('New account Created - Google');
         return new_account;
     }
 }
@@ -175,7 +186,7 @@ router.post('/google',
     async(req, res) => {
         // exchange code for tokens
         const { tokens } = await oAuth2Client.getToken(req.body.code); 
-        console.log(tokens);
+        // console.log(tokens);
 
         const ticket = await oAuth2Client.verifyIdToken({
             idToken: tokens.id_token,
@@ -188,19 +199,20 @@ router.post('/google',
             email: email,
             picture: picture,
         }   
-        console.log(user);
+        // console.log(user);
         const new_account = await findOrCreateAccount(user);
 
         // Access token
-        const access_token = jwt.sign({user: new_account}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+        const accessToken = jwt.sign({user: new_account}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
         // Refresh token
-        const refresh_token = jwt.sign({user: new_account}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+        const refreshToken = jwt.sign({user: new_account}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
 
         console.log('Google Auth Process Completed!');
+        console.log(new_account);
 
         res.status(201).json({
-            access_token: access_token,
-            refresh_token: refresh_token
+            accessToken: accessToken,
+            refreshToken: refreshToken
         });
 
         // res.status(201).json(user);

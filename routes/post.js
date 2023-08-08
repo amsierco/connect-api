@@ -17,12 +17,15 @@ router.get('/',
     async(req, res, next) => {
 
         try{
-            const posts = await Post.find({}).sort({ date: 1 }).populate([
-                { path: 'comments' },
-                { path: 'user_id', select: 'username picture _id', strictPopulate: false } 
-            ]).exec();
+            const posts = await Post
+                .find({})
+                .sort({ date: -1 })
+                .populate([
+                    { path: 'comments' },
+                    { path: 'user_id', select: 'username picture _id', strictPopulate: false } 
+                ])
+                .exec();
             res.status(200).json(posts);
-            console.log('posts collected');
 
         } catch (err) {
             console.log(err)
@@ -84,7 +87,6 @@ router.post('/like/:id',
             if(null !== post){
 
                 // Decrease likes and pull user from like array
-                console.log('Try to remove like')
                 const updated_post = await Post.findOneAndUpdate(
                     { _id: post_id},
                     {
@@ -99,8 +101,6 @@ router.post('/like/:id',
             } else {
 
                 // Increase likes and push user to like array
-                console.log('Try to add like')
-
                 const updated_post = await Post.findOneAndUpdate(
                     { _id: post_id },
                     {

@@ -86,5 +86,29 @@ router.get('/:id/friends',
     }
 );
 
+// POST edit profile description
+router.post('/:profileId/edit',
+    verifyToken,
+    async(req, res, next) => {
+        try{
+
+            const profileId = req.user._id;
+            const description = req.body.description;
+            console.log('try update')
+            await User.findOneAndUpdate(
+                { _id: profileId },
+                {
+                    description: description
+                }
+            )
+            
+            console.log('update good');
+
+            return res.status(200);
+        } catch (err) {
+            next(err);
+        }
+    }
+)
 
 module.exports = router;
