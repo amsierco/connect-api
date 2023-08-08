@@ -21,12 +21,11 @@ router.get('/',
                 { path: 'comments' },
                 { path: 'user_id', select: 'username picture _id', strictPopulate: false } 
             ]).exec();
-            console.log(posts);
             res.status(200).json(posts);
             console.log('posts collected');
 
         } catch (err) {
-            console.log('err'+err)
+            console.log(err)
             return next(err);
         }
     }

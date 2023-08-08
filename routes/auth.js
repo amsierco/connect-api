@@ -51,9 +51,13 @@ router.get('/validate',
         const user = {
             _id: req.user._id,
             username: req.user.username,
-            picture: req.user.picture
+            picture: req.user.picture,
+            notifications: req.user.notifications
         };
-        res.status(200).json({ access_token: req.token, user: user });
+        res.status(200).json({ 
+            accessToken: req.token, 
+            user: user 
+        });
     }
 );
 
@@ -66,18 +70,29 @@ router.post('/login',
         const errors = validationResult(req);
         // Catch validation errors
         if(!errors.isEmpty()) {
-            console.log('Validation Error: ' + errors);
-            res.status(500);
+            res.status(500).json(errors);
         }
 
         // Validate login info
         try {
-            // Users can login in with either username OR email
-            const username = await User.findOne({ username: req.body.username_email });
-            const email = await User.findOne({ email: req.body.username_email });
-            const user = (username !== null) ? username : email;
+            // USERNAME LOGIN IS TEMPORARY ONLY!!!!
+            const username = await User
+                .findOne({ username: req.body.username_email })
+                .populate(
+                    {
+                        path: 'notifications',
+                        populate: {
+                            path: 'sender'
+                        }
+                    }
+                )
+                .exec();
+
+            // const email = await User.findOne({ email: req.body.username_email });
+            // const user = (username !== null) ? username : email;
+            const user = username;
+
             if(!user) {
-                console.log('User not found');
                 res.status(404).json('User not found');
             }
 
@@ -86,24 +101,22 @@ router.post('/login',
                 // Valid password
                 if (resp) {
                     // Access token
-                    const access_token = jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+                    const accessToken = jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
                     // Refresh token
-                    const refresh_token = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+                    const refreshToken = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
 
                     res.status(201).json({
-                        access_token: access_token,
-                        refresh_token: refresh_token
+                        accessToken: accessToken,
+                        refreshToken: refreshToken,
                     });
 
                 } else {
                     // Invalid password
-                    console.log('Incorrect password');
-                    res.status(403).json('Incorrect password')
+                    res.status(403).json(err);
                 }
               });
 
         } catch(err) {
-            console.log('Error: '+err);
             return next(err);
         }
     }
@@ -144,10 +157,10 @@ router.post('/signup',
                 await user.save();
 
                 // Save auth token
-                const access_token = jwt.sign({user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+                const accessToken = jwt.sign({user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
                 // Save refresh token
-                const refresh_token = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
-                res.status(201).json({access_token, refresh_token});
+                const refreshToken = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+                res.status(201).json({accessToken, refreshToken});
             });
 
         } catch(err) {

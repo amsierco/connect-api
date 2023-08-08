@@ -13,7 +13,7 @@ router.get('/:id',
     async(req, res, next) => {
         // const notifications = req.user.notifications;
         try {
-            const response = await User.findById(req.params.id);
+            const response = await User.findById(req.params.id).populate('notifications.sender');
 
             console.log(response);
             res.status(200).json(response.notifications);
@@ -90,7 +90,7 @@ router.post('/friend-request/:id/:status',
                         }
                     );
 
-                    console.log('FREINDS NOT ADDED')
+                    console.log('FRIENDS NOT ADDED')
                     res.status(200);
                 }
 
