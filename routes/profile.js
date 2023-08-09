@@ -17,6 +17,63 @@ router.get('/',
     }
 );
 
+// GET suggested users
+router.get('/suggested-users',
+    async(req, res, next) => {
+        try {
+            const activeUserId = req.query.activeUserId;
+
+            // Get users not in activeUser friend list nor activeUser itself
+            const unfilteredUsers = await User.find({
+                'friends': {
+                    $nin: activeUserId
+                    
+                },
+                _id: {
+                    $ne: activeUserId
+                }
+            })
+            .populate(
+                {
+                    path: 'notifications',
+                    populate: {
+                        path: 'sender',
+                        select: '_id'
+                    }
+                }
+            )
+            .select('_id username notifications');
+
+            // Compute action button status
+            const filteredUsers = unfilteredUsers.map(user => {
+                let status = 'add';
+
+                if(user.notifications.length !== 0){
+                    // console.log(user.notifications[0]);
+                    if(user.notifications[0].sender._id.toString() === activeUserId){
+                        status = 'pending';
+                    }
+                }
+
+                return { ...user._doc, status: status}
+            })
+
+            console.log('Unfiltered')
+            console.log(unfilteredUsers);
+            console.log('Filtered')
+            console.log(filteredUsers);
+
+
+
+            res.status(200).json(filteredUsers);
+
+        } catch (err) {
+            console.log(err);
+            next(err);
+        }
+    }
+);
+
 // GET profile data from ID
 router.get('/:profileId', 
     async(req, res, next) => {
@@ -67,11 +124,11 @@ router.get('/:profileId',
 );
 
 // GET friends
-router.get('/:id/friends',
+router.get('/:profileId/friends',
     async(req, res, next) => {
         try{
-            const user_id = req.params.id;
-            const user = await User.findById(user_id);
+            const profileId = req.params.id;
+            const user = await User.findById(profileId);
             const friends = user.friends;
 
             if(null !== user){

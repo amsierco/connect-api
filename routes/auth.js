@@ -58,17 +58,36 @@ async function findOrCreateAccount(user){
 // GET Validate jwt token
 router.get('/validate', 
     verifyToken,
-    (req, res) => {
-        const user = {
-            _id: req.user._id,
-            username: req.user.username,
-            picture: req.user.picture,
-            notifications: req.user.notifications
-        };
-        res.status(200).json({ 
-            accessToken: req.token, 
-            user: user 
-        });
+    async(req, res, next) => {
+        try{
+            // Fetch updated notifications
+            const response = await User
+                .findById(req.user._id)
+                .populate(
+                    {
+                        path: 'notifications',
+                        populate: {
+                            path: 'sender'
+                        }
+                    }
+                )
+                .exec();
+            const updatedNotifications = response.notifications;
+
+            const user = {
+                _id: req.user._id,
+                username: req.user.username,
+                picture: req.user.picture,
+                notifications: updatedNotifications
+            };
+            res.status(200).json({ 
+                accessToken: req.token, 
+                user: user 
+            });
+
+        } catch (err) {
+            next(err)
+        }
     }
 );
 

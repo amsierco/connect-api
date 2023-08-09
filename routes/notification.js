@@ -82,15 +82,13 @@ router.post('/friend-request/:id/:status',
                         }
                     );
 
-                    console.log(updatedResponse);
                     const updatedNotifications = updatedResponse.notifications
 
-                    console.log('FRIEND ADDED')
                     res.status(200).json({notifications: updatedNotifications});
 
                 } else if (req.params.status === 'reject') {
                     // Update active user
-                    await User.findOneAndUpdate(
+                    const updatedResponse = await User.findOneAndUpdate(
                         {_id: current_user},
                         {
                             $pull: { 
@@ -99,15 +97,24 @@ router.post('/friend-request/:id/:status',
                                     
                                 },
                             }
+                        },
+                        {new: true}
+                    )
+                    .populate(
+                        {
+                            path: 'notifications',
+                            populate: {
+                                path: 'sender'
+                            }
                         }
                     );
 
-                    console.log('FRIENDS NOT ADDED')
-                    res.status(200);
+                    const updatedNotifications = updatedResponse.notifications
+
+                    res.status(200).json({notifications: updatedNotifications});
                 }
 
             } else {
-                console.log('NOTIFICATION NOT FOUND')
                 res.status(500);
             }
 
