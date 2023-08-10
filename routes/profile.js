@@ -6,20 +6,20 @@ const verifyToken = require('../verifyToken');
 // Schema
 const User = require('../models/user');
 
-// GET profile of current user
-router.get('/', 
-    // Get user from token
-    verifyToken,
-    async(req, res, next) => {
-        console.log('defuilt profie')
-        const user = req.user;
-        res.status(200).json(user);
-    }
-);
+// // GET profile of current user
+// router.get('/', 
+//     // Get user from token
+//     verifyToken,
+//     async(req, res, next) => {
+//         console.log('defuilt profie')
+//         const user = req.user;
+//         res.status(200).json(user);
+//     }
+// );
 
 // GET suggested users
 router.get('/suggested-users',
-    async(req, res, next) => {
+    async(req, res) => {
         try {
             const activeUserId = req.query.activeUserId;
 
@@ -58,28 +58,21 @@ router.get('/suggested-users',
                 return { ...user._doc, status: status}
             })
 
-            // console.log('Unfiltered')
-            // console.log(unfilteredUsers);
-            // console.log('Filtered')
-            // console.log(filteredUsers);
-
-
-
             res.status(200).json(filteredUsers);
 
         } catch (err) {
-            console.log(err);
-            next(err);
+            res.status(500).json(err);
         }
     }
 );
 
-// GET profile data from ID
+// GET user profile
 router.get('/:profileId', 
-    async(req, res, next) => {
+    async(req, res) => {
         try{
             const profileId = req.params.profileId;
             const activeUserId = req.query.activeUserId;
+            
             // Search for user and populate friend array if it contains activeUserId
             const user = await User
                 .findById(profileId)
@@ -89,43 +82,59 @@ router.get('/:profileId',
                         match: {'_id': activeUserId}
                     },
                     {
+                        path: 'notifications',
+                        match: {'sender._id': activeUserId}
+                    },
+                    {
                         path: 'posts',
+                        select: '_id message likes',
                         limit: 9
                     }
-                ]);
+                ])
+                .select('-password -email')
+                // Convert to JS obj
+                .lean();
 
             if(user){
-                const reply = {
-                    user,
-                    isOwner: false,
-                    isFriend: false,
-                };
+                user.isOwner = false;
+                user.status = 'add';
+                
 
-                // Check if requested profile = active user profile
+                // Check if requested profile is activeUser
                 if(profileId === activeUserId){
-                    reply.isOwner = true;
+                    user.isOwner = true;
+                    user.status = 'current';
                 }
 
                 // Check if requested user is friends with active user
                 if(user.friends.length !== 0){
-                    reply.isFriend = true;
+                    user.status = 'remove';
                 }
 
-                res.status(200).json(reply);
+                // Check for pending status
+                if(user.notifications.length !== 0){
+                    user.notifications.map(notification => {
+                        if(notification.sender.toString() === activeUserId){
+                            user.status = 'pending';
+                        }
+                    })  
+                }
+
+                res.status(200).json(user);
                 
             } else {
-                res.status(404);
+                res.status(404).json('User not found');
             }
 
         } catch (err) {
-            return next(err);
+            res.status(500).json(err);
         }
     }
 );
 
 // GET profile friends
 router.get('/:profileId/friends',
-    async(req, res, next) => {
+    async(req, res) => {
         try{
             const activeUserId = req.query.activeUserId;
             const profileId = req.params.profileId;
@@ -175,7 +184,7 @@ router.get('/:profileId/friends',
             res.status(200).json(filteredFriends);
 
         } catch (err) {
-            return next(err);
+            res.status(500).json(err);
         }
     }
 );
@@ -183,24 +192,22 @@ router.get('/:profileId/friends',
 // POST edit profile description
 router.post('/:profileId/edit',
     verifyToken,
-    async(req, res, next) => {
+    async(req, res) => {
         try{
-
             const profileId = req.user._id;
             const description = req.body.description;
-            console.log('try update')
+
             await User.findOneAndUpdate(
                 { _id: profileId },
                 {
                     description: description
                 }
             )
-            
-            console.log('update good');
 
-            return res.status(200);
+            res.status(200);
+
         } catch (err) {
-            next(err);
+            res.status(500).json(err);
         }
     }
 )
