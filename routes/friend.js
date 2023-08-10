@@ -6,11 +6,11 @@ const verifyToken = require('../verifyToken');
 const User = require('../models/user');
 
 // GET friend
-router.get('/:id',
+router.get('/:friendId',
     verifyToken,
     async(req, res, next) => {
         try{
-            const user_id = req.params.id;
+            const user_id = req.params.friendId;
             // Gets friends by their id
             const user = await User.findById(user_id);
 
@@ -24,7 +24,7 @@ router.get('/:id',
                         picture: user.picture,
                         _id: user._id,
                         isFriend: true,
-                        isUser: true
+                        isUser: true,
                     }); 
                 }
 
@@ -41,7 +41,8 @@ router.get('/:id',
                         picture: user.picture,
                         _id: user._id,
                         isFriend: true,
-                        isUser: false
+                        isUser: false,
+                        status: 'remove'
                     }); 
                 } else {
                     console.log('ACTIVE USER IS NOT FRIEND')
@@ -50,7 +51,8 @@ router.get('/:id',
                         picture: user.picture,
                         _id: user._id,
                         isFriend: false,
-                        isUser: false
+                        isUser: false,
+                        status: 'add'
                     }); 
                 }
 
@@ -71,11 +73,6 @@ router.post('/:id/request',
         try {
             const reciever_id = req.params.id;
             const sender_id = req.user._id;
-
-            /**
-             * Add validation/checks
-             * Force accepting now for testing
-             */
 
             // Check if already friends
             const response =  await User.findOneAndUpdate(
@@ -98,7 +95,7 @@ router.post('/:id/request',
                         $pull: { friends: reciever_id }
                     }
                 );
-                return res.status(200);
+                res.status(200);
 
             } else {
                 // Add friend

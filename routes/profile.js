@@ -42,7 +42,7 @@ router.get('/suggested-users',
                     }
                 }
             )
-            .select('_id username notifications');
+            .select('_id username notifications picture');
 
             // Compute action button status
             const filteredUsers = unfilteredUsers.map(user => {
@@ -58,10 +58,10 @@ router.get('/suggested-users',
                 return { ...user._doc, status: status}
             })
 
-            console.log('Unfiltered')
-            console.log(unfilteredUsers);
-            console.log('Filtered')
-            console.log(filteredUsers);
+            // console.log('Unfiltered')
+            // console.log(unfilteredUsers);
+            // console.log('Filtered')
+            // console.log(filteredUsers);
 
 
 
@@ -123,19 +123,56 @@ router.get('/:profileId',
     }
 );
 
-// GET friends
+// GET profile friends
 router.get('/:profileId/friends',
     async(req, res, next) => {
         try{
-            const profileId = req.params.id;
-            const user = await User.findById(profileId);
-            const friends = user.friends;
+            const activeUserId = req.query.activeUserId;
+            const profileId = req.params.profileId;
+            
+            const user = await User
+            .findOne({
+                _id: profileId,
+            })
+            .populate([
+                {
+                    path: 'notifications',
+                    populate: {
+                        path: 'sender',
+                        select: '_id'
+                    }
+                },
+                {
+                    path: 'friends',
+                    populate: {
+                        path: 'notifications'
+                    },
+                    select: '_id username picture notifications'
+                }
+            ])
+            .select('_id username picture notifications friends');
 
-            if(null !== user){
-                res.status(200).json(friends); 
-            } else {
-                res.status(404).json('User not found');
-            }
+            const filteredFriends = user.friends.map(friend => {
+                let status = 'remove';
+
+                // Check notifications for activeUser as sender
+                if(friend.notifications.length !== 0){
+                    friend.notifications.map(notification => {
+                        if(notification.sender._id.toString() === activeUserId){
+                            status = 'pending';
+                        }
+                    })
+                }
+
+                // Check if friend is activeUser
+                if(friend._id.toString() === activeUserId){
+                    status = 'current';
+                }
+
+                return { ...friend._doc, status: status}
+            })
+    
+            res.status(200).json(filteredFriends);
 
         } catch (err) {
             return next(err);
