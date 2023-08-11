@@ -87,7 +87,7 @@ router.get('/:profileId',
                     },
                     {
                         path: 'posts',
-                        select: '_id message likes',
+                        select: '_id message likes comments',
                         limit: 9
                     }
                 ])

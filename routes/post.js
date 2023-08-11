@@ -146,26 +146,6 @@ router.get('/like/:id',
     }
 );
 
-// GET Post Author
-// router.get('/author/:id',
-//     async(req, res, next) => {
-//         try{
-//             const user_id = req.params.id;
-//             // console.log('Incomming ID: ' + user_id);
-//             const user = await User.findById(user_id);
-//             if(null !== user){
-//                 // console.log('Response sent!')
-//                 res.status(200).json(user); 
-//             } else {
-//                 res.status(404).json('User not found');
-//             }
-
-//         } catch (err) {
-//             return next(err);
-//         }
-//     }
-// );
-
 // GET post by ID
 router.get('/:id',
     async(req, res, next) => {
@@ -227,22 +207,23 @@ router.post('/:id/edit',
     }
 );
 
-// POST delete new post
-router.post('/:id/delete',
+// POST delete post
+router.post('/:postId/delete',
+    verifyToken,
     async(req, res, next) => {
         try{
-            const post_id = req.params.id;
-            const old_post = await Post.findById(post_id);
+            const postId = req.params.postId;
+            const post = await Post.findById(postId);
 
             // Check if post exists
-            if(null === old_post){
+            if(null === post){
                 return res.status(404).json('Post not found');
             }
 
             // Check is logged in user created original post
-            if(req.user._id == old_post.user_id){
+            if(req.user._id == post.user_id){
                 // Delete post
-                await Post.deleteOne({ _id: post_id });
+                await Post.deleteOne({ _id: post });
                 res.status(200).json('Post deleted'); 
 
             } else {

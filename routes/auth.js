@@ -105,9 +105,17 @@ router.post('/login',
 
         // Validate login info
         try {
-            // USERNAME LOGIN IS TEMPORARY ONLY!!!!
-            const username = await User
-                .findOne({ username: req.body.username_email })
+            const user = await User
+                .findOne({
+                    $or: [
+                        {
+                            username: req.body.username_email 
+                        },
+                        {
+                            email: req.body.username_email 
+                        }
+                    ]
+                })
                 .populate(
                     {
                         path: 'notifications',
@@ -117,10 +125,6 @@ router.post('/login',
                     }
                 )
                 .exec();
-
-            // const email = await User.findOne({ email: req.body.username_email });
-            // const user = (username !== null) ? username : email;
-            const user = username;
 
             if(!user) {
                 res.status(404).json('User not found');
@@ -167,9 +171,15 @@ router.post('/signup',
         // Add new user to databse
         try {
             // Check for existing email conflicts
-            const email = await User.findOne({ email: req.body.username_email });
+            const email = await User.findOne({ email: req.body.email });
             if(email !== null) {
-                res.status(403).json('Select email already has an account associated with it');
+                return res.status(403).json('Select email already has an account associated with it');
+            }
+
+            // Check for existing username conflicts
+            const username = await User.findOne({ username: req.body.username });
+            if(username !== null) {
+                return res.status(403).json('Select username already has an account associated with it');
             }
 
             // Hash the valid password
