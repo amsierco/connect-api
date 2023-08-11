@@ -7,63 +7,88 @@ const User = require('../models/user');
 
 // GET friend
 router.get('/:friendId',
-    verifyToken,
-    async(req, res, next) => {
-        try{
-            const user_id = req.params.friendId;
-            // Gets friends by their id
-            const user = await User.findById(user_id);
+    // verifyToken,
+    // async(req, res, next) => {
+    //     console.log('ROUTE CALLED!!!!')
+    //     try{
+    //         const user_id = req.params.friendId;
+    //         // Gets friends by their id
+    //         const user = await User.findById(user_id);
 
-            if(null !== user){
+    //         if(null !== user){
 
-                // Check if friend is current user
-                if(user_id === req.user._id){
-                    console.log('SAME USER')
-                    return res.status(200).json({
-                        username: user.username,
-                        picture: user.picture,
-                        _id: user._id,
-                        isFriend: true,
-                        isUser: true,
-                    }); 
-                }
+    //             // Check if friend is current user
+    //             if(user_id === req.user._id){
+    //                 return res.status(200).json({
+    //                     username: user.username,
+    //                     picture: user.picture,
+    //                     _id: user._id,
+    //                     isFriend: true,
+    //                     isUser: true,
+    //                 }); 
+    //             }
 
-                // Check if logged in user is also a friend
-                const friend_status = await User.findOne({
-                    _id: user_id,
-                    'friends': req.user
-                });
+    //             // Check if logged in user is also a friend
+    //             const activeUser = await User.findOne({
+    //                 _id: user_id,
+    //                 'friends': req.user
+    //             })
+    //             .populate(
+    //                 {
+    //                     path: 'notifications',
+    //                     populate: {
+    //                         path: 'sender',
+    //                         select: '_id'
+    //                     }
+    //                 }
+    //             )
+    //             .select('notifications');
 
-                if(null !== friend_status){
-                    console.log('ACTIVE USER IS FRIEND')
-                    res.status(200).json({
-                        username: user.username,
-                        picture: user.picture,
-                        _id: user._id,
-                        isFriend: true,
-                        isUser: false,
-                        status: 'remove'
-                    }); 
-                } else {
-                    console.log('ACTIVE USER IS NOT FRIEND')
-                    res.status(200).json({
-                        username: user.username,
-                        picture: user.picture,
-                        _id: user._id,
-                        isFriend: false,
-                        isUser: false,
-                        status: 'add'
-                    }); 
-                }
+    //             if(null !== activeUser){
 
-            } else {
-                res.status(404).json('User not found');
-            }
+    //                 if(activeUser.notifications.length !== 0){
+    //                     activeUser.notifications.map(notification => {
+    //                         if(notification.sender._id.toString() === user_id){
+    //                             return res.status(200).json({
+    //                                 username: user.username,
+    //                                 picture: user.picture,
+    //                                 _id: user._id,
+    //                                 isFriend: true,
+    //                                 isUser: false,
+    //                                 status: 'incoming'
+    //                             }); 
+    //                         }
+    //                     })
+    //                 } else {
+    //                     return res.status(200).json({
+    //                         username: user.username,
+    //                         picture: user.picture,
+    //                         _id: user._id,
+    //                         isFriend: true,
+    //                         isUser: false,
+    //                         status: 'remove'
+    //                     }); 
+    //                 }
 
-        } catch (err) {
-            return next(err);
-        }
-    }
+    //             } else {
+    //                 res.status(200).json({
+    //                     username: user.username,
+    //                     picture: user.picture,
+    //                     _id: user._id,
+    //                     isFriend: false,
+    //                     isUser: false,
+    //                     status: 'add'
+    //                 }); 
+    //             }
+
+    //         } else {
+    //             res.status(404).json('User not found');
+    //         }
+
+    //     } catch (err) {
+    //         return next(err);
+    //     }
+    // }
 );
 
 // POST send friend request
@@ -88,7 +113,6 @@ router.post('/:id/request',
 
             if(response) {
                 // Remove friend
-                console.log('remove friend')
                 await User.findOneAndUpdate(
                     { _id: sender_id },
                     {
@@ -99,7 +123,6 @@ router.post('/:id/request',
 
             } else {
                 // Add friend
-
                 await User.findOneAndUpdate(
                     {_id: reciever_id},
                     {
@@ -108,21 +131,6 @@ router.post('/:id/request',
                     {new: true}
                 );
 
-                // await User.findOneAndUpdate(
-                //     {_id: reciever_id},
-                //     {
-                //         $push: { friends: sender_id }
-                //     },
-                //     {new: true}
-                // );
-
-                // await User.findOneAndUpdate(
-                //     {_id: sender_id},
-                //     {
-                //         $push: { friends: reciever_id }
-                //     },
-                //     {new: true}
-                // );
                 res.status(200);
             }
 

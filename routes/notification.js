@@ -14,8 +14,6 @@ router.get('/:id',
         // const notifications = req.user.notifications;
         try {
             const response = await User.findById(req.params.id).populate('notifications.sender');
-
-            console.log(response);
             res.status(200).json(response.notifications);
         } catch (err) {
             next(err);
@@ -41,8 +39,6 @@ router.post('/friend-request/:id/:status',
                 },
             )
             .select('notifications');
-
-            // console.log(notification);
 
             if(response){
                 const notification = response.notifications[0];

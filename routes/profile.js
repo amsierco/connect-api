@@ -44,14 +44,37 @@ router.get('/suggested-users',
             )
             .select('_id username notifications picture');
 
+            const activeUser = await User.findById(activeUserId)
+            .populate(
+                {
+                    path: 'notifications',
+                    populate: {
+                        path: 'sender',
+                        select: '_id'
+                    }
+                }
+            )
+            .select('notifications');
+
             // Compute action button status
             const filteredUsers = unfilteredUsers.map(user => {
+                // console.log(user);
                 let status = 'add';
 
                 if(user.notifications.length !== 0){
-                    // console.log(user.notifications[0]);
                     if(user.notifications[0].sender._id.toString() === activeUserId){
                         status = 'pending';
+                    }
+                }
+
+                // Check if user sent request to activeUser
+                if(status === 'add'){
+                    if(activeUser.notifications.length !== 0){
+                        activeUser.notifications.map(notification => {
+                            if(notification.sender._id.toString() === user._id.toString()){
+                                status = 'incoming';
+                            }
+                        })
                     }
                 }
 
@@ -95,6 +118,18 @@ router.get('/:profileId',
                 // Convert to JS obj
                 .lean();
 
+            const activeUser = await User.findById(activeUserId)
+            .populate(
+                {
+                    path: 'notifications',
+                    populate: {
+                        path: 'sender',
+                        select: '_id'
+                    }
+                }
+            )
+            .select('notifications');
+
             if(user){
                 user.isOwner = false;
                 user.status = 'add';
@@ -118,6 +153,16 @@ router.get('/:profileId',
                             user.status = 'pending';
                         }
                     })  
+                }
+
+                // Check for incoming status
+                // Check if user sent request to activeUser 
+                if(activeUser.notifications.length !== 0){
+                    activeUser.notifications.map(notification => {
+                        if(notification.sender._id.toString() === user._id.toString()){
+                            user.status = 'incoming';
+                        }
+                    })
                 }
 
                 res.status(200).json(user);
@@ -161,6 +206,18 @@ router.get('/:profileId/friends',
             ])
             .select('_id username picture notifications friends');
 
+            const activeUser = await User.findById(activeUserId)
+            .populate(
+                {
+                    path: 'notifications',
+                    populate: {
+                        path: 'sender',
+                        select: '_id'
+                    }
+                }
+            )
+            .select('notifications');
+
             const filteredFriends = user.friends.map(friend => {
                 let status = 'remove';
 
@@ -173,6 +230,15 @@ router.get('/:profileId/friends',
                     })
                 }
 
+                // Check if user sent request to activeUser 
+                if(activeUser.notifications.length !== 0){
+                    activeUser.notifications.map(notification => {
+                        if(notification.sender._id.toString() === friend._id.toString()){
+                            status = 'incoming';
+                        }
+                    })
+                }
+
                 // Check if friend is activeUser
                 if(friend._id.toString() === activeUserId){
                     status = 'current';
@@ -180,7 +246,6 @@ router.get('/:profileId/friends',
 
                 return { ...friend._doc, status: status}
             })
-    
             res.status(200).json(filteredFriends);
 
         } catch (err) {

@@ -100,7 +100,7 @@ router.post('/login',
         const errors = validationResult(req);
         // Catch validation errors
         if(!errors.isEmpty()) {
-            res.status(500).json(errors);
+            return res.status(500).json(errors);
         }
 
         // Validate login info
@@ -127,7 +127,7 @@ router.post('/login',
                 .exec();
 
             if(!user) {
-                res.status(404).json('User not found');
+                return res.status(403).json('User not found');
             }
 
             // Validate password
@@ -166,7 +166,7 @@ router.post('/signup',
         const errors = validationResult(req);
         // Catch validation errors
         if(!errors.isEmpty()) {
-            res.status(500);
+            return res.status(500);
         }
         // Add new user to databse
         try {
@@ -204,7 +204,7 @@ router.post('/signup',
             });
 
         } catch(err) {
-            return next(err);
+            return res.status(500).json('Internal error')
         }
     }
 );
