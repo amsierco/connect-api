@@ -18,20 +18,18 @@ const verifyToken = (req, res, next) => {
     // Verify access token
     jwt.verify(bearerToken, process.env.TOKEN_KEY, (err, decoded) => {
       if(err){
+        
         //Check refresh token
         const refreshToken = req.headers['refresh_token'];
 
         jwt.verify(refreshToken, process.env.REFRESH_TOKEN_KEY, (err, decoded) => {
           if(err){
             res.sendStatus(403);
-          } else {
 
+          } else {
             // Refresh new token
-            const new_token = jwt.sign({user: decoded['user']}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE});
+            const new_token = jwt.sign({userId: decoded['userId']}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE});
           
-            // const user = decoded['userId'];
-            // Removes password field
-            // delete user.password;
             req.userId = decoded['userId'];
             req.token = new_token;
             next();
@@ -39,10 +37,6 @@ const verifyToken = (req, res, next) => {
         });
 
       } else {
-        // const user = decoded['user'];
-        // Removes password field
-        // delete user.password;
-        // req.user = user;
         req.userId = decoded['userId'];
         req.token = bearerToken;
         next();

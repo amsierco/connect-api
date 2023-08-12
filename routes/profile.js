@@ -264,7 +264,7 @@ router.post('/:profileId/edit',
             const picture = req.body.base64String;
 
             if(picture){
-                console.log('pic recieved')
+
                 await User.findOneAndUpdate(
                     { _id: profileId },
                     {

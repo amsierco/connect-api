@@ -39,11 +39,11 @@ router.post('/create',
     verifyToken,
     // body('message').isLength(1).withMessage('Required field'),
     async(req, res, next) => {
-        const errors = validationResult(req);
+        // const errors = validationResult(req);
         // Catch validation errors
-        if(!errors.isEmpty()) {
-            res.status(500);
-        }
+        // if(!errors.isEmpty()) {
+        //     res.status(500);
+        // }
 
         try{
             const post = new Post({
@@ -150,6 +150,7 @@ router.get('/like/:id',
 // GET post by ID
 router.get('/:id',
     async(req, res, next) => {
+        console.log('GET POST ID CALELD!')
         try{
             const post_id = req.params.id;
             const post = await Post.findById(post_id);
@@ -222,7 +223,8 @@ router.post('/:postId/delete',
             }
 
             // Check is logged in user created original post
-            if(req.userId == post.user_id){
+
+            if(req.userId.toString() == post.user_id.toString()){
                 // Delete post
                 await Post.deleteOne({ _id: post });
                 res.status(200).json('Post deleted'); 

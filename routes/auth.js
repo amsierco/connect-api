@@ -20,8 +20,8 @@ const User = require('../models/user');
 
 // External login/signup check
 async function findOrCreateAccount(user){
-    // const existing_account = await User.findOne({ email: user.email });
-    const existing_account = await User
+
+    const existingAccount = await User
         .findOne({ email: user.email })
         .populate(
             {
@@ -34,22 +34,21 @@ async function findOrCreateAccount(user){
         .exec();
 
     // Account exists
-    if(existing_account){
-        // console.log('Existing account');
-        return existing_account;
+    if(existingAccount){
+        return existingAccount._id;
     
     // Create new account
     } else {
         // Create a new database entry
-        const new_account = new User({
+        const newAccount = new User({
             username: user.username,
             email: user.email,
             picture: user.picture
         });
 
         // Save to databse
-        await new_account.save();
-        return new_account;
+        await newAccount.save();
+        return newAccount._id;
     }
 }
 
@@ -130,11 +129,8 @@ router.post('/login',
 
             // Validate password
             bcrypt.compare(req.body.password, user.password, (err, resp) => {
-                // Valid password
                 if (resp) {
-                    // Access token
                     const accessToken = jwt.sign({userId: user._id}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
-                    // Refresh token
                     const refreshToken = jwt.sign({userId: user._id}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
 
                     res.status(201).json({
@@ -149,7 +145,7 @@ router.post('/login',
               });
 
         } catch(err) {
-            return next(err);
+            res.status(403).json(err);
         }
     }
 );
@@ -194,26 +190,26 @@ router.post('/signup',
                 // Save to databse
                 await user.save();
 
-                // Save auth token
-                const accessToken = jwt.sign({user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
-                // Save refresh token
-                const refreshToken = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
-                res.status(201).json({accessToken, refreshToken});
+                const accessToken = jwt.sign({userId: user._id}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+                const refreshToken = jwt.sign({userId: user._id}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+                
+                res.status(201).json({
+                    accessToken, 
+                    refreshToken
+                });
             });
 
         } catch(err) {
-            return res.status(500).json('Internal error')
+            res.status(500).json('Internal error')
         }
     }
 );
 
 // POST Google Login
 router.post('/google',
-
     async(req, res) => {
         // exchange code for tokens
         const { tokens } = await oAuth2Client.getToken(req.body.code); 
-        // console.log(tokens);
 
         const ticket = await oAuth2Client.verifyIdToken({
             idToken: tokens.id_token,
@@ -226,25 +222,15 @@ router.post('/google',
             email: email,
             picture: picture,
         }   
-        // console.log(user);
-        const new_account = await findOrCreateAccount(user);
-
-        // Access token
-        const accessToken = jwt.sign({user: new_account}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
-        // Refresh token
-        const refreshToken = jwt.sign({user: new_account}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
-
-        console.log('Google Auth Process Completed!');
-        console.log(new_account);
+        const newAccountId = await findOrCreateAccount(user);
+        const accessToken = jwt.sign({userId: newAccountId.toString()}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+        const refreshToken = jwt.sign({userId: newAccountId.toString()}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
 
         res.status(201).json({
             accessToken: accessToken,
             refreshToken: refreshToken
         });
-
-        // res.status(201).json(user);
     }
-
 
     // passport.authenticate("google", {
     //     scope: ["profile", "email"],
@@ -252,28 +238,29 @@ router.post('/google',
 );
 
 // GET Google login callback
-router.get("/google/callback",
-    passport.authenticate("google", { session: false }),
-    async function(req, res){
-        const google_user = {
-            username: req.user.displayName,
-            email: req.user._json.email,
-            picture: req.user._json.picture,
-            provider: req.user.provider
-        };
+// router.get("/google/callback",
+//     passport.authenticate("google", { session: false }),
+//     async function(req, res){
+//         console.log('GOOGLE CALLBACK CALLED!')
+//         const google_user = {
+//             username: req.user.displayName,
+//             email: req.user._json.email,
+//             picture: req.user._json.picture,
+//             provider: req.user.provider
+//         };
 
-        try {
-            const user = await findOrCreateAccount(google_user);
-            // Save current user in token
-            jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
-                res.token = token;
-                res.status(201).json({token});
-            });
+//         try {
+//             const user = await findOrCreateAccount(google_user);
+//             // Save current user in token
+//             jwt.sign({userId: user._id.toString()}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE }, (err, token) => {
+//                 res.token = token;
+//                 res.status(201).json({token});
+//             });
 
-        } catch (err) {
-            res.status(500).json(err);
-        }
-    }
-);
+//         } catch (err) {
+//             res.status(500).json(err);
+//         }
+//     }
+// );
 
 module.exports = router;
