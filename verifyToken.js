@@ -29,20 +29,21 @@ const verifyToken = (req, res, next) => {
             // Refresh new token
             const new_token = jwt.sign({user: decoded['user']}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE});
           
-            const user = decoded['user'];
+            // const user = decoded['userId'];
             // Removes password field
-            delete user.password;
-            req.user = user;
+            // delete user.password;
+            req.userId = decoded['userId'];
             req.token = new_token;
             next();
           }
         });
 
       } else {
-        const user = decoded['user'];
+        // const user = decoded['user'];
         // Removes password field
-        delete user.password;
-        req.user = user;
+        // delete user.password;
+        // req.user = user;
+        req.userId = decoded['userId'];
         req.token = bearerToken;
         next();
       }

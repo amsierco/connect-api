@@ -97,13 +97,13 @@ router.post('/:id/request',
     async(req, res, next) => {
         try {
             const reciever_id = req.params.id;
-            const sender_id = req.user._id;
+            const sender_id = req.userId;
 
             // Check if already friends
             const response =  await User.findOneAndUpdate(
                 {
                     _id: reciever_id,
-                    'friends': req.user
+                    'friends': req.userId
                 },
                 {
                     $pull: { friends: sender_id }

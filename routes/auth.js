@@ -8,7 +8,6 @@ const passport = require('passport');
 
 // Google auth
 const { OAuth2Client } = require('google-auth-library')
-// const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 const oAuth2Client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
@@ -33,7 +32,7 @@ async function findOrCreateAccount(user){
             }
         )
         .exec();
-    // console.log('existing? '+existing_account);
+
     // Account exists
     if(existing_account){
         // console.log('Existing account');
@@ -50,7 +49,6 @@ async function findOrCreateAccount(user){
 
         // Save to databse
         await new_account.save();
-        // console.log('New account Created - Google');
         return new_account;
     }
 }
@@ -62,7 +60,7 @@ router.get('/validate',
         try{
             // Fetch updated notifications
             const response = await User
-                .findById(req.user._id)
+                .findById(req.userId)
                 .populate(
                     {
                         path: 'notifications',
@@ -75,9 +73,9 @@ router.get('/validate',
             const updatedNotifications = response.notifications;
 
             const user = {
-                _id: req.user._id,
-                username: req.user.username,
-                picture: req.user.picture,
+                _id: req.userId,
+                username: response.username,
+                picture: response.picture,
                 notifications: updatedNotifications
             };
             res.status(200).json({ 
@@ -135,9 +133,9 @@ router.post('/login',
                 // Valid password
                 if (resp) {
                     // Access token
-                    const accessToken = jwt.sign({user: user}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
+                    const accessToken = jwt.sign({userId: user._id}, process.env.TOKEN_KEY, { expiresIn: process.env.TOKEN_KEY_EXPIRE });
                     // Refresh token
-                    const refreshToken = jwt.sign({user: user}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
+                    const refreshToken = jwt.sign({userId: user._id}, process.env.REFRESH_TOKEN_KEY, { expiresIn: process.env.REFRESH_TOKEN_KEY_EXPIRE });
 
                     res.status(201).json({
                         accessToken: accessToken,

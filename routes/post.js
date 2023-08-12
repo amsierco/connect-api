@@ -37,7 +37,7 @@ router.get('/',
 // POST create new post
 router.post('/create', 
     verifyToken,
-    body('message').isLength(1).withMessage('Required field'),
+    // body('message').isLength(1).withMessage('Required field'),
     async(req, res, next) => {
         const errors = validationResult(req);
         // Catch validation errors
@@ -47,15 +47,16 @@ router.post('/create',
 
         try{
             const post = new Post({
-                user_id: req.user,
+                user_id: req.userId,
                 message: req.body.message,
+                image: req.body.base64String
             });
 
             await post.save();
 
             // Updated user doc
             await User.findOneAndUpdate(
-                { _id: req.user._id },
+                { _id: req.userId },
                 {
                     $push: { posts: post }
                 }
@@ -75,12 +76,12 @@ router.post('/like/:id',
     async(req, res) => {
         try {
             const post_id = req.params.id;
-            const user = req.user;
+            // const user = req.user;
 
             // Search DB
             const post = await Post.findOne({
                 _id: post_id,
-                'likes.users': user
+                'likes.users._id': req.userId
             });
 
             // Unlike post
@@ -91,7 +92,7 @@ router.post('/like/:id',
                     { _id: post_id},
                     {
                         $inc: { 'likes.count': -1 },
-                        $pull: {'likes.users': user._id }
+                        $pull: {'likes.users._id': userId }
                     },
                     { new: true }
                 );
@@ -105,7 +106,7 @@ router.post('/like/:id',
                     { _id: post_id },
                     {
                         $inc: { 'likes.count': 1 },
-                        $push: { 'likes.users': user }
+                        $push: { 'likes.users._id': userId }
                     },
                     { new: true }
                 );
@@ -125,12 +126,12 @@ router.get('/like/:id',
     async(req, res) => {
         try {
             const post_id = req.params.id;
-            const user = req.user;
+            // const user = req.user;
 
             // Search DB
             const already_liked = await Post.findOne({
                 _id: post_id,
-                'likes.users': user
+                'likes.users._id': req.userId
             });
 
             if(null !== already_liked){
@@ -185,7 +186,7 @@ router.post('/:id/edit',
             }
 
             // Check is logged in user created original post
-            if(req.user._id == old_post.user_id){
+            if(req.userId == old_post.user_id){
                 // Find post and update
                 const updated_post = await Post.findOneAndUpdate(
                     { _id: post_id },
@@ -221,7 +222,7 @@ router.post('/:postId/delete',
             }
 
             // Check is logged in user created original post
-            if(req.user._id == post.user_id){
+            if(req.userId == post.user_id){
                 // Delete post
                 await Post.deleteOne({ _id: post });
                 res.status(200).json('Post deleted'); 
@@ -269,7 +270,7 @@ router.post('/:id/comments/create',
             // Create new comment
             const comment = new Comment({
                 post_id: post_id,
-                user_id: req.user,
+                user_id: req.userId,
                 message: req.body.message,
             });
 

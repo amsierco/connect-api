@@ -110,7 +110,7 @@ router.get('/:profileId',
                     },
                     {
                         path: 'posts',
-                        select: '_id message likes comments',
+                        select: '_id message likes comments image',
                         limit: 9
                     }
                 ])
@@ -261,13 +261,25 @@ router.post('/:profileId/edit',
         try{
             const profileId = req.user._id;
             const description = req.body.description;
+            const picture = req.body.base64String;
 
-            await User.findOneAndUpdate(
-                { _id: profileId },
-                {
-                    description: description
-                }
-            )
+            if(picture){
+                console.log('pic recieved')
+                await User.findOneAndUpdate(
+                    { _id: profileId },
+                    {
+                        description: description,
+                        picture: picture
+                    }
+                )
+            } else {
+                await User.findOneAndUpdate(
+                    { _id: profileId },
+                    {
+                        description: description
+                    }
+                )
+            }
 
             res.status(200);
 

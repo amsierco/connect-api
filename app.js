@@ -36,7 +36,6 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     },
     async (accessToken, refreshToken, profile, done) => {
-      console.log('Google auth validation called');
       return done(null, profile);
     }
   )
@@ -48,15 +47,9 @@ app.use(express.json());
 app.use(helmet());
 app.use(logger("common"));
 
-// view engine setup
-// app.set('views', path.join(__dirname, 'views'));
-// app.set('view engine', 'pug');
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
-// app.get('/', (req,res,next) => {res.render('layout', {message: 'test'})});
-// app.get('/home', (req,res,next) => {res.render('layout', {message: 'WORKING'})});
 app.use('/api/auth', authRouter);
 app.use('/api/posts', postRouter);
 app.use('/api/profile', profileRouter);
@@ -74,9 +67,7 @@ app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
   res.status(err.status || 500);
-  // res.render('error');
 });
 
 module.exports = app;

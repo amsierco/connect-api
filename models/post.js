@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 const PostSchema = new Schema({
     user_id: { type: Schema.Types.ObjectId, ref: "User" },
     message: { type: String, max: 500 },
+    image: { type: String },
     likes: { 
         count: { type: Number, default: 0 },
         users: [{ type: Schema.Types.ObjectId, ref: 'User' }], 
